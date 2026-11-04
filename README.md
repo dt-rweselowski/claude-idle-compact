@@ -36,9 +36,9 @@ that the conversation is now a summary: see [Caveats](#caveats).
   detail over, and leaves a line in the transcript saying so (`not compacted: the conversation is
   12k tokens, under the 40k floor`). The system prompt and tool definitions don't count: compaction
   can't shrink them, and they get re-cached on your return either way.
-- Otherwise it runs the same compaction `/compact` runs. The instructions tell the summariser that the
-  user stepped away, and what to keep: open tasks, decisions and their reasons, follow-ups with dates,
-  file paths, and anything the user asked to remember.
+- Otherwise it runs the same compaction `/compact` runs. The instructions ask the summariser for
+  a concise summary with six parts: completed work, current state, work in progress, next steps,
+  constraints (user preferences, requirements, decisions made) and any other critical context.
 - It leaves a line in the transcript and a pinned status line under the prompt:
 
   ```

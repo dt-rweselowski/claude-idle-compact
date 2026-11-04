@@ -53,10 +53,16 @@ function minTokens(options: PluginOptions) {
   return nonNegative(options.minTokens) ?? DEFAULT_MIN_TOKENS
 }
 
-const instructions = (at: string, idleMin: number) =>
-  `This compaction ran automatically at ${at}, after ${idleMin} minutes idle, before the prompt cache expired. ` +
-  'Open the summary by saying so. Keep open tasks, decisions and their reasons, pending follow-ups with dates, ' +
-  'file paths touched, and anything the user asked to be remembered.'
+const INSTRUCTIONS = `Create a detailed summary for continuing this coding session. Include:
+
+1. **Completed work**: What tasks were finished
+2. **Current state**: Files modified, their current status
+3. **In progress**: What is being worked on now
+4. **Next steps**: Clear actions to take
+5. **Constraints**: User preferences, project requirements, key decisions made
+6. **Critical context**: Any information essential for continuing
+
+Be concise but preserve enough detail that work can continue seamlessly.`
 
 /** Per-activation state: the armed timer and what the module has put on screen. */
 type State = {
@@ -103,7 +109,7 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
       $.ui.log(`not compacted: the timer fired ${idleMin} min after the last turn, too late for a warm cache`)
       return
     }
-    const result = await $.session.compact({ instructions: instructions(at, idleMin) })
+    const result = await $.session.compact({ instructions: INSTRUCTIONS })
     if (result.messages === undefined) return
     // tokensBefore is the whole context; tokensAfter is only the summary, without the system prompt and tools.
     const summary = result.tokensAfter === undefined ? '' : ` → ${inThousands(result.tokensAfter)} summary`

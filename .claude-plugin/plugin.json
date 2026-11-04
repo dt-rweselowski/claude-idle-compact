@@ -1,6 +1,6 @@
 {
   "name": "idle-compact",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Compacts an idle interactive session shortly before its prompt cache expires, so coming back later doesn't re-read the whole context uncached.",
   "author": { "name": "David Roberts" },
   "homepage": "https://github.com/davidar/claude-idle-compact",
@@ -24,6 +24,12 @@
       "description": "Leave smaller conversations alone: re-reading them cold is cheap. The system prompt and tools don't count.",
       "default": 40000,
       "min": 0
+    },
+    "compactPrompt": {
+      "type": "string",
+      "title": "Compaction prompt",
+      "description": "Instructions for the summary, as you would give them to /compact. Leave empty for the built-in six-part continuation summary.",
+      "default": ""
     }
   }
 }

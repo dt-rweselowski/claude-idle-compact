@@ -53,7 +53,7 @@ function minTokens(options: PluginOptions) {
   return nonNegative(options.minTokens) ?? DEFAULT_MIN_TOKENS
 }
 
-const INSTRUCTIONS = `Create a detailed summary for continuing this coding session. Include:
+const DEFAULT_INSTRUCTIONS = `Create a detailed summary for continuing this coding session. Include:
 
 1. **Completed work**: What tasks were finished
 2. **Current state**: Files modified, their current status
@@ -63,6 +63,12 @@ const INSTRUCTIONS = `Create a detailed summary for continuing this coding sessi
 6. **Critical context**: Any information essential for continuing
 
 Be concise but preserve enough detail that work can continue seamlessly.`
+
+/** The compactPrompt option, or the built-in prompt when it is unset or blank. */
+function instructions(options: PluginOptions) {
+  const raw = options.compactPrompt
+  return typeof raw === 'string' && raw.trim() ? raw : DEFAULT_INSTRUCTIONS
+}
 
 /** Per-activation state: the armed timer and what the module has put on screen. */
 type State = {
@@ -88,7 +94,7 @@ function clearStatus($: EngineInterface, state: State) {
   state.hasStatus = false
 }
 
-async function compactIfWorthIt($: EngineInterface, state: State, idleSince: number, latest: number, floor: number) {
+async function compactIfWorthIt($: EngineInterface, state: State, idleSince: number, latest: number, floor: number, prompt: string) {
   const fired = state.generation
   try {
     const { context } = await $.session.usage({ breakdown: 'full' })
@@ -109,7 +115,7 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
       $.ui.log(`not compacted: the timer fired ${idleMin} min after the last turn, too late for a warm cache`)
       return
     }
-    const result = await $.session.compact({ instructions: INSTRUCTIONS })
+    const result = await $.session.compact({ instructions: prompt })
     if (result.messages === undefined) return
     // tokensBefore is the whole context; tokensAfter is only the summary, without the system prompt and tools.
     const summary = result.tokensAfter === undefined ? '' : ` → ${inThousands(result.tokensAfter)} summary`
@@ -126,10 +132,10 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
 }
 
 /** Starts the timer: due `ms` from now, it measures the idle time from `idleSince`. */
-function schedule($: EngineInterface, state: State, idleSince: number, ms: number, delay: number, floor: number) {
+function schedule($: EngineInterface, state: State, idleSince: number, ms: number, delay: number, options: PluginOptions) {
   state.timer = $.clock.after(ms, () => {
     state.timer = undefined
-    void compactIfWorthIt($, state, idleSince, idleSince + delay + MARGIN_MS, floor)
+    void compactIfWorthIt($, state, idleSince, idleSince + delay + MARGIN_MS, minTokens(options), instructions(options))
   })
 }
 
@@ -140,7 +146,7 @@ async function arm($: EngineInterface, state: State, options: PluginOptions) {
   const idleSince = await $.clock.now()
   const sessionId = await $.session.id()
   if (armed !== state.generation) return
-  schedule($, state, idleSince, delay, delay, minTokens(options))
+  schedule($, state, idleSince, delay, delay, options)
   // Kept for a reload of the module, which cancels the timer.
   await $.state.set(LAST_TURN, { sessionId, at: idleSince })
   // A turn.start that disarmed meanwhile may have cleared it before this write landed.
@@ -159,7 +165,7 @@ async function rearm($: EngineInterface, state: State, options: PluginOptions) {
   // Past the deadline the timer has fired already, or the session was resumed long after: either way
   // there's nothing to do now.
   const left = last.at + delay - now
-  if (left > 0) schedule($, state, last.at, left, delay, minTokens(options))
+  if (left > 0) schedule($, state, last.at, left, delay, options)
 }
 
 /**

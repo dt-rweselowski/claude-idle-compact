@@ -39,6 +39,7 @@ that the conversation is now a summary: see [Caveats](#caveats).
 - Otherwise it runs the same compaction `/compact` runs. The instructions ask the summariser for
   a concise summary with six parts: completed work, current state, work in progress, next steps,
   constraints (user preferences, requirements, decisions made) and any other critical context.
+  The `compactPrompt` option replaces these instructions with your own.
 - It leaves a line in the transcript and a pinned status line under the prompt:
 
   ```
@@ -132,6 +133,7 @@ Set these with `/plugin configure idle-compact@anthropic-plugin-directory` (or
 |---|---|---|
 | `idleMinutes` | `50` | Minutes idle before compacting. |
 | `minTokens` | `40000` | Leave conversations smaller than this alone. It counts the conversation only (`/context`'s Messages row), not the system prompt and tools. |
+| `compactPrompt` | empty | Instructions for the summary, as you'd pass them to `/compact`. Empty uses the built-in six-part continuation summary. |
 
 ## Caveats
 

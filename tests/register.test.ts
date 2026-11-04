@@ -317,6 +317,30 @@ describe('when it fires', () => {
     expect(seen.compacts.length).toBe(1)
   })
 
+  test('asks for the built-in continuation summary by default', async ($, on) => {
+    const { clock, seen } = setup(on)
+    await turnDone($)
+    await clock.advance(50 * MIN + 1)
+    await clock.settle()
+    expect(seen.compacts[0]).toContain('Create a detailed summary for continuing this coding session')
+  })
+
+  test('the compactPrompt option replaces the instructions', { options: { compactPrompt: 'Keep only the open TODOs.' } }, async ($, on) => {
+    const { clock, seen } = setup(on)
+    await turnDone($)
+    await clock.advance(50 * MIN + 1)
+    await clock.settle()
+    expect(seen.compacts).toEqual(['Keep only the open TODOs.'])
+  })
+
+  test('a blank compactPrompt falls back to the built-in one', { options: { compactPrompt: '  ' } }, async ($, on) => {
+    const { clock, seen } = setup(on)
+    await turnDone($)
+    await clock.advance(50 * MIN + 1)
+    await clock.settle()
+    expect(seen.compacts[0]).toContain('Create a detailed summary for continuing this coding session')
+  })
+
   test('without a breakdown, the whole context counts', async ($, on) => {
     const { clock, seen } = setup(on, { tokens: 200_000, messages: null })
     await turnDone($)

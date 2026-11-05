@@ -113,7 +113,7 @@ Each version there is reviewed by Anthropic before it goes live, so it can trail
 releases as soon as they're pushed, add this repo as a marketplace and install from it instead:
 
 ```
-/plugin marketplace add davidar/claude-idle-compact
+/plugin marketplace add dt-rweselowski/claude-idle-compact
 /plugin install idle-compact@idle-compact
 ```
 

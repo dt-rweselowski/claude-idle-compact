@@ -184,7 +184,7 @@ describe('reloading', () => {
     await clock.advance(2)
     await clock.settle()
     expect(seen.compacts.length).toBe(1)
-    expect(seen.logs).toEqual(['compacted at 18:50 after 50 min idle (200k tokens → 12k summary)'])
+    expect(seen.logs).toEqual(['compacted at 18:50 after 50 min idle (200k tokens → 12k summary) with built-in prompt; /idle-compact-prompt <text> to set your own'])
   })
 
   test('a freshly loaded module re-arms from the stored turn', async ($, on) => {
@@ -195,7 +195,7 @@ describe('reloading', () => {
     await clock.advance(2)
     await clock.settle()
     expect(seen.compacts.length).toBe(1)
-    expect(seen.logs).toEqual(['compacted at 18:20 after 50 min idle (200k tokens → 12k summary)'])
+    expect(seen.logs).toEqual(['compacted at 18:20 after 50 min idle (200k tokens → 12k summary) with built-in prompt; /idle-compact-prompt <text> to set your own'])
   })
 
   test('a reload past the deadline does nothing and says nothing', async ($, on) => {
@@ -338,7 +338,7 @@ describe('when it fires', () => {
     await turnDone($)
     await clock.advance(50 * MIN + 1)
     await clock.settle()
-    const line = 'compacted at 18:50 after 50 min idle (200k tokens → 12k summary)'
+    const line = 'compacted at 18:50 after 50 min idle (200k tokens → 12k summary) with built-in prompt; /idle-compact-prompt <text> to set your own'
     expect(seen.logs).toEqual([line])
     expect(seen.status).toEqual([line])
     await turnStart($)
@@ -351,7 +351,7 @@ describe('when it fires', () => {
     await turnDone($)
     await clock.advance(50 * MIN + 1)
     await clock.settle()
-    expect(seen.logs).toEqual(['compacted at 18:50 after 50 min idle (200k tokens → 12k summary, 99% read from cache)'])
+    expect(seen.logs).toEqual(['compacted at 18:50 after 50 min idle (200k tokens → 12k summary, 99% read from cache) with built-in prompt; /idle-compact-prompt <text> to set your own'])
   })
 
   test('a timer that fires late, after the machine slept, does not compact and says why', async ($, on) => {

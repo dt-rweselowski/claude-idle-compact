@@ -43,7 +43,7 @@ that the conversation is now a summary: see [Caveats](#caveats).
 - It leaves a line in the transcript and a pinned status line under the prompt:
 
   ```
-  ● idle-compact: compacted at 19:13 after 50 min idle (367k tokens → 12k summary, 99% read from cache)
+  ● idle-compact: compacted at 19:13 after 50 min idle (367k tokens → 12k summary, 99% read from cache) with built-in prompt; /idle-compact-prompt <text> to set your own
   ```
 
   The first figure is the whole context before. The second is the summary alone: the context you

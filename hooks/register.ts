@@ -71,7 +71,7 @@ Be concise but preserve enough detail that work can continue seamlessly.`
 /** The prompt set with /idle-compact-prompt, read when compacting so a change applies without a reload. */
 async function instructions($: EngineInterface) {
   const stored = await $.store.get(PROMPT_KEY).catch(() => undefined)
-  return typeof stored === 'string' && stored.trim() ? stored : DEFAULT_INSTRUCTIONS
+  return typeof stored === 'string' && stored.trim() ? { text: stored, isCustom: true } : { text: DEFAULT_INSTRUCTIONS, isCustom: false }
 }
 
 /** Per-activation state: the armed timer and what the module has put on screen. */
@@ -119,12 +119,14 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
       $.ui.log(`not compacted: the timer fired ${idleMin} min after the last turn, too late for a warm cache`)
       return
     }
-    const result = await $.session.compact({ instructions: await instructions($) })
+    const prompt = await instructions($)
+    const result = await $.session.compact({ instructions: prompt.text })
     if (result.messages === undefined) return
     // tokensBefore is the whole context; tokensAfter is only the summary, without the system prompt and tools.
     const summary = result.tokensAfter === undefined ? '' : ` → ${inThousands(result.tokensAfter)} summary`
     const sizes = `${inThousands(result.tokensBefore ?? before)} tokens${summary}${cacheShare(result.usage)}`
-    const line = `compacted at ${at} after ${idleMin} min idle (${sizes})`
+    const which = prompt.isCustom ? 'your prompt; /idle-compact-prompt to view or change' : 'built-in prompt; /idle-compact-prompt <text> to set your own'
+    const line = `compacted at ${at} after ${idleMin} min idle (${sizes}) with ${which}`
     $.ui.log(line)
     // A turn started while the summary ran has already cleared the status; don't pin a stale one.
     if (fired !== state.generation) return

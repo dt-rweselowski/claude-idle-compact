@@ -10,6 +10,10 @@ const DEFAULT_MIN_TOKENS = 40_000
 
 // When a session's last main-loop turn ended (declared in types/index.d.ts). Held by the host for the
 // process, so it outlives a reload of this module.
+// Key in $.store (kept across sessions) for the prompt set with /idle-compact-prompt.
+const PROMPT_KEY = 'compactPrompt'
+const COMMAND = 'idle-compact-prompt'
+
 const LAST_TURN = { plugin: 'idle-compact', key: 'lastTurn' } as const
 
 function nonNegative(raw: unknown): number | undefined {
@@ -69,6 +73,9 @@ Be concise but preserve enough detail that work can continue seamlessly.`
  * The built-in prompt when the option is unset, or the file is unreadable or blank.
  */
 async function instructions($: EngineInterface, options: PluginOptions) {
+  // A prompt set with /idle-compact-prompt wins over the option.
+  const stored = await $.store.get(PROMPT_KEY).catch(() => undefined)
+  if (typeof stored === 'string' && stored.trim()) return stored
   const path = options.compactPromptFile
   if (typeof path !== 'string' || !path.trim()) return DEFAULT_INSTRUCTIONS
   try {
@@ -216,7 +223,28 @@ export const register: Register = (on, options) => {
   // cancels the timer: pick up where the last turn left off.
   on('session.start', async ($, e, next) => {
     const result = await next(e)
+    await $.command
+      .register({
+        name: COMMAND,
+        description: 'Set the prompt idle-compact compacts with. No text shows it; "reset" clears it.',
+        argumentHint: '[prompt | reset]',
+      })
+      .catch(() => {})
     await rearm($, state, options).catch(() => {})
     return result
+  })
+
+  on('command.run', { command: COMMAND }, async ($, e) => {
+    const text = e.args.trim()
+    if (text === 'reset') {
+      await $.store.delete(PROMPT_KEY)
+      return { text: 'idle-compact: prompt cleared; using the compactPromptFile option or the built-in prompt.' }
+    }
+    if (!text) {
+      const stored = await $.store.get(PROMPT_KEY)
+      return { text: typeof stored === 'string' && stored.trim() ? `idle-compact prompt:\n${stored}` : 'idle-compact: no prompt set; using the compactPromptFile option or the built-in prompt.' }
+    }
+    await $.store.set(PROMPT_KEY, text)
+    return { text: `idle-compact: prompt set (${text.length} characters).` }
   })
 }

@@ -39,7 +39,7 @@ that the conversation is now a summary: see [Caveats](#caveats).
 - Otherwise it runs the same compaction `/compact` runs. The instructions ask the summariser for
   a concise summary with six parts: completed work, current state, work in progress, next steps,
   constraints (user preferences, requirements, decisions made) and any other critical context.
-  The `compactPromptFile` option replaces these instructions with your own.
+  `/idle-compact-prompt <text>` or the `compactPromptFile` option replaces these instructions with your own.
 - It leaves a line in the transcript and a pinned status line under the prompt:
 
   ```

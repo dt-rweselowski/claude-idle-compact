@@ -64,10 +64,19 @@ const DEFAULT_INSTRUCTIONS = `Create a detailed summary for continuing this codi
 
 Be concise but preserve enough detail that work can continue seamlessly.`
 
-/** The compactPrompt option, or the built-in prompt when it is unset or blank. */
-function instructions(options: PluginOptions) {
-  const raw = options.compactPrompt
-  return typeof raw === 'string' && raw.trim() ? raw : DEFAULT_INSTRUCTIONS
+/**
+ * The text of the compactPromptFile option, read when compacting so edits apply without a reload.
+ * The built-in prompt when the option is unset, or the file is unreadable or blank.
+ */
+async function instructions($: EngineInterface, options: PluginOptions) {
+  const path = options.compactPromptFile
+  if (typeof path !== 'string' || !path.trim()) return DEFAULT_INSTRUCTIONS
+  try {
+    const text = await $.fs.read(path)
+    return typeof text === 'string' && text.trim() ? text : DEFAULT_INSTRUCTIONS
+  } catch {
+    return DEFAULT_INSTRUCTIONS
+  }
 }
 
 /** Per-activation state: the armed timer and what the module has put on screen. */
@@ -94,7 +103,7 @@ function clearStatus($: EngineInterface, state: State) {
   state.hasStatus = false
 }
 
-async function compactIfWorthIt($: EngineInterface, state: State, idleSince: number, latest: number, floor: number, prompt: string) {
+async function compactIfWorthIt($: EngineInterface, state: State, idleSince: number, latest: number, floor: number, options: PluginOptions) {
   const fired = state.generation
   try {
     const { context } = await $.session.usage({ breakdown: 'full' })
@@ -115,7 +124,7 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
       $.ui.log(`not compacted: the timer fired ${idleMin} min after the last turn, too late for a warm cache`)
       return
     }
-    const result = await $.session.compact({ instructions: prompt })
+    const result = await $.session.compact({ instructions: await instructions($, options) })
     if (result.messages === undefined) return
     // tokensBefore is the whole context; tokensAfter is only the summary, without the system prompt and tools.
     const summary = result.tokensAfter === undefined ? '' : ` → ${inThousands(result.tokensAfter)} summary`
@@ -135,7 +144,7 @@ async function compactIfWorthIt($: EngineInterface, state: State, idleSince: num
 function schedule($: EngineInterface, state: State, idleSince: number, ms: number, delay: number, options: PluginOptions) {
   state.timer = $.clock.after(ms, () => {
     state.timer = undefined
-    void compactIfWorthIt($, state, idleSince, idleSince + delay + MARGIN_MS, minTokens(options), instructions(options))
+    void compactIfWorthIt($, state, idleSince, idleSince + delay + MARGIN_MS, minTokens(options), options)
   })
 }
 

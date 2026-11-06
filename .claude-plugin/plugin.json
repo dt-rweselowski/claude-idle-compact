@@ -1,6 +1,6 @@
 {
   "name": "idle-compact",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Compacts an idle interactive session shortly before its prompt cache expires, so coming back later doesn't re-read the whole context uncached.",
   "author": { "name": "David Roberts" },
   "homepage": "https://github.com/dt-rweselowski/claude-idle-compact",
@@ -25,11 +25,10 @@
       "default": 40000,
       "min": 0
     },
-    "compactPrompt": {
-      "type": "string",
-      "title": "Compaction prompt",
-      "description": "Instructions for the summary, as you would give them to /compact. Leave empty for the built-in six-part continuation summary.",
-      "default": ""
+    "compactPromptFile": {
+      "type": "file",
+      "title": "Compaction prompt file",
+      "description": "A text file with the instructions for the summary, as you would give them to /compact. Leave empty for the built-in six-part continuation summary."
     }
   }
 }

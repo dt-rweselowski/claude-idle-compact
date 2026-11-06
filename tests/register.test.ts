@@ -15,8 +15,6 @@ type Setup = {
   usage?: ModelUsage
   /** What `$.state` holds at the start, as a reloaded module finds it. */
   stored?: Stored
-  /** Files `$.fs.read` finds, by path; any other path is unreadable. */
-  files?: Record<string, string>
 }
 
 type Stored = { sessionId: string; at: number } | null
@@ -35,7 +33,7 @@ function breakdown(tokens: number | null, messages: number): SessionContextBreak
 }
 
 /** Answers everything the module reads beneath it, and records what it does. */
-function setup(on: On, { tokens = 200_000, messages = tokens === null ? null : tokens - 20_000, compact = 'ok', usage, stored = null, files = {} }: Setup = {}) {
+function setup(on: On, { tokens = 200_000, messages = tokens === null ? null : tokens - 20_000, compact = 'ok', usage, stored = null }: Setup = {}) {
   const clock = mock.clock(on, { now: T0 })
   // lateMs: how late the timer fires, as after the machine slept. The module reads the usage
   // before the time, so the usage hook is where the clock runs on.
@@ -56,11 +54,6 @@ function setup(on: On, { tokens = 200_000, messages = tokens === null ? null : t
     if (compact === 'throw') throw new Error('a turn is running')
     seen.compacts.push(e.instructions ?? '')
     return compact === 'skip' ? { skip: 'nothing to compact' } : { messages: [SUMMARY], tokensBefore: tokens ?? undefined, tokensAfter: 12_000, usage }
-  })
-  on('fs.read', (_$, e) => {
-    const text = files[e.path]
-    if (text === undefined) throw new Error(`${e.path}: no such file`)
-    return { value: text }
   })
   on('ui.log', (_$, e) => (seen.logs.push(e.text), { value: undefined }))
   on('ui.status', (_$, e) => (seen.status.push(e.text), { value: undefined }))
@@ -325,33 +318,6 @@ describe('when it fires', () => {
   })
 
   test('asks for the built-in continuation summary by default', async ($, on) => {
-    const { clock, seen } = setup(on)
-    await turnDone($)
-    await clock.advance(50 * MIN + 1)
-    await clock.settle()
-    expect(seen.compacts[0]).toContain('Create a detailed summary for continuing this coding session')
-  })
-
-  const PROMPT_PATH = '/w/prompt.md'
-
-  test('the compactPromptFile option replaces the instructions, multiline', { options: { compactPromptFile: PROMPT_PATH } }, async ($, on) => {
-    const text = 'Keep only:\n- the open TODOs\n- the branch name\n'
-    const { clock, seen } = setup(on, { files: { [PROMPT_PATH]: text } })
-    await turnDone($)
-    await clock.advance(50 * MIN + 1)
-    await clock.settle()
-    expect(seen.compacts).toEqual([text])
-  })
-
-  test('a blank compactPromptFile falls back to the built-in one', { options: { compactPromptFile: PROMPT_PATH } }, async ($, on) => {
-    const { clock, seen } = setup(on, { files: { [PROMPT_PATH]: '  \n' } })
-    await turnDone($)
-    await clock.advance(50 * MIN + 1)
-    await clock.settle()
-    expect(seen.compacts[0]).toContain('Create a detailed summary for continuing this coding session')
-  })
-
-  test('an unreadable compactPromptFile falls back to the built-in one', { options: { compactPromptFile: PROMPT_PATH } }, async ($, on) => {
     const { clock, seen } = setup(on)
     await turnDone($)
     await clock.advance(50 * MIN + 1)

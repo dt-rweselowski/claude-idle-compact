@@ -228,13 +228,14 @@ export const register: Register = (on, options) => {
     const text = e.args.trim()
     if (text === 'reset') {
       await $.store.delete(PROMPT_KEY)
-      return { text: 'idle-compact: prompt cleared; using the built-in prompt.' }
+      return { text: 'prompt cleared; using the built-in prompt.' }
     }
     if (!text) {
-      const stored = await $.store.get(PROMPT_KEY)
-      return { text: typeof stored === 'string' && stored.trim() ? `idle-compact prompt:\n${stored}` : 'idle-compact: no prompt set; using the built-in prompt.' }
+      const { text: current, isCustom } = await instructions($)
+      const note = isCustom ? 'your prompt' : 'this is the default prompt; /idle-compact-prompt <text> sets your own'
+      return { text: `idle-compact (${note}):\n${current}` }
     }
     await $.store.set(PROMPT_KEY, text)
-    return { text: `idle-compact: prompt set (${text.length} characters).` }
+    return { text: `prompt set (${text.length} characters).` }
   })
 }

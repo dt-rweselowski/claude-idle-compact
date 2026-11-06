@@ -183,6 +183,13 @@ and shows what the rewrite will cost. The trade-off:
 - **cache-tax** loses no detail, but costs something every hour you're away, and you have to arm it.
 - **idle-compact** is automatic and costs something once, but you come back to a summary.
 
+## Credits
+
+idle-compact was created by [David Roberts](https://github.com/davidar) and is a fork of
+[davidar/claude-idle-compact](https://github.com/davidar/claude-idle-compact). This fork is
+maintained by René Weselowski. It adds the `/idle-compact-prompt` command for setting the compaction
+prompt, and no longer has the `compactPromptFile` option.
+
 ## License
 
-MIT
+MIT. Copyright David Roberts and René Weselowski: see [LICENSE](LICENSE).

@@ -1,8 +1,8 @@
 {
   "name": "idle-compact",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Compacts an idle interactive session shortly before its prompt cache expires, so coming back later doesn't re-read the whole context uncached.",
-  "author": { "name": "David Roberts" },
+  "author": { "name": "René Weselowski" },
   "homepage": "https://github.com/dt-rweselowski/claude-idle-compact",
   "repository": "https://github.com/dt-rweselowski/claude-idle-compact",
   "documentationUrl": "https://github.com/dt-rweselowski/claude-idle-compact#readme",
